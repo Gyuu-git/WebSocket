@@ -1,0 +1,40 @@
+1. <!-- 웹소켓 의존성 추가 -->
+<!-- https://mvnrepository.com/artifact/org.springframework/spring-websocket -->
+<dependency>
+	<groupId>org.springframework</groupId>
+	<artifactId>spring-websocket</artifactId>
+	<version>${org.springframework-version}</version>
+</dependency>
+
+2. 클래스 생성
+extends TextWebSocketHandler
+
+Override 메소드 생성
+afterConnectionEstablished
+afterConnectionClosed
+handleTextMessage
+handleTransportError
+
+3. servlet-context 
+맨 위 beans에 추가
+xmlns:websocket="http://www.springframework.org/schema/websocket"
+schemaLocation = 
+http://www.springframework.org/schema/websocket
+http://www.springframework.org/schema/websocket/spring-websocket.xsd
+
+아래 추가
+	<websocket:handlers allowed-origins="*" >
+		<websocket:mapping handler="wsHandler" path="/socket" />
+		<websocket:handshake-interceptors>
+			<beans:bean class="org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor"/>
+		</websocket:handshake-interceptors>
+		<websocket:sockjs websocket-enabled="true"/>
+	</websocket:handlers>
+    <beans:bean id="wsHandler" class="kr.or.ddit.controller.SpringWs" />
+
+* mapping에 handler == beans에 id
+* mapping에 path는 소켓 연결path
+* beans에 class는 소켓 서버클래스의 패키지경로.클래스명
+
+4. jsp 소켓 연결
+var webSocket = new SockJS("/ws/socket");
