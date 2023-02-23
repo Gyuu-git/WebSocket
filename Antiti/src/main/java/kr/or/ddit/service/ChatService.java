@@ -12,4 +12,7 @@ public interface ChatService {
 	public void updateLast(ChatVO chatVO);
 
 	public int getMsgCount(String chatMessage);
+
+	public int getStuCount();
+
 }

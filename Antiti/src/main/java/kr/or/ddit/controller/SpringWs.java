@@ -68,11 +68,11 @@ public class SpringWs extends TextWebSocketHandler {
 			
 			List<ChatVO> chatList = chatService.getChatList();
 			for(ChatVO chatVO : chatList) {
-				session.sendMessage(buildJsonTextMessage("true", chatVO.getChatCont(), chatVO.getStuNum()));
+				session.sendMessage(buildJsonTextMessage("true", chatVO.getChatCont(), chatVO.getStuNum(), chatVO.getReadCount()));
 			}
 			
 			int count = chatService.getMsgCount(chatMessage);
-			session.sendMessage(buildJsonTextMessage("true", count + "", "countMsg"));
+			session.sendMessage(buildJsonTextMessage("true", count + "", "countMsg", -1));
 		}
 		
 		// 채팅창을 열었을 때
@@ -100,10 +100,11 @@ public class SpringWs extends TextWebSocketHandler {
 		if("message".equals(command)) {
 			ChatVO chatVO = new ChatVO();
 			WsSessionVO wsVO = null;
+			int cnt = 0;
 			for(WsSessionVO sessionVO : userSessionList) {
+				if(sessionVO.getStatus() == 0) cnt ++;
 				if(sessionVO.getWebSocketSession() == session) {
 					wsVO = sessionVO;
-					break;
 				}
 			}
 			
@@ -115,7 +116,10 @@ public class SpringWs extends TextWebSocketHandler {
 				chatService.updateLast(chatVO);
 			}
 			
-			sendToAll(buildJsonTextMessage("false", chatMessage, wsVO.getName()));
+			int stuCount = chatService.getStuCount();
+			cnt += stuCount - userSessionList.size();
+			
+			sendToAll(buildJsonTextMessage("false", chatMessage, wsVO.getName(), cnt));
 		}
 		
 	}
@@ -130,7 +134,7 @@ public class SpringWs extends TextWebSocketHandler {
 		}
 	}
 	
-	private TextMessage buildJsonTextMessage(String isConn, String chatMessage, String name) {
+	private TextMessage buildJsonTextMessage(String isConn, String chatMessage, String name, int readCount) {
 		Gson gson = new Gson();
 		Map<String, String> jsonMap = new HashMap<String, String>();
 		
@@ -138,6 +142,9 @@ public class SpringWs extends TextWebSocketHandler {
 			jsonMap.put("isConn", isConn);
 			jsonMap.put("message", chatMessage);
 			jsonMap.put("name" , name);
+		}
+		if(readCount != -1) {
+			jsonMap.put("readCount", readCount + "");
 		}
 		
 		String strJson = gson.toJson(jsonMap);

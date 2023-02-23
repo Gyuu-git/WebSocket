@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import kr.or.ddit.mapper.ChatMapper;
 import kr.or.ddit.service.ChatService;
 import kr.or.ddit.vo.ChatVO;
+import kr.or.ddit.vo.ReadCountVO;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -17,7 +18,17 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	public List<ChatVO> getChatList() {
-		return chatMapper.getChatList();
+		List<ChatVO> chatVOList = chatMapper.getChatList();
+		List<ReadCountVO> rcList = chatMapper.readCount();
+		
+		for(ReadCountVO rcVO : rcList) {
+			for(ChatVO chatVO : chatVOList) {
+				if(chatVO.getChatNum() > rcVO.getLastChat()) {
+					chatVO.setReadCount(chatVO.getReadCount() + rcVO.getPlus());
+				}
+			}
+		}
+		return chatVOList;
 	}
 
 	@Override
@@ -33,6 +44,11 @@ public class ChatServiceImpl implements ChatService {
 	@Override
 	public int getMsgCount(String chatMessage) {
 		return chatMapper.getMsgCount(chatMessage);
+	}
+
+	@Override
+	public int getStuCount() {
+		return chatMapper.getStuCount();
 	}
 	
 }

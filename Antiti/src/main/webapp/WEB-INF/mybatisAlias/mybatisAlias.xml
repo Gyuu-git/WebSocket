@@ -15,5 +15,6 @@
    <!-- 자주 사용하는 타입의 별칭을 세팅 -->
 	<typeAliases>
 		<typeAlias type="kr.or.ddit.vo.ChatVO" alias="chatVO"/>
+		<typeAlias type="kr.or.ddit.vo.ReadCountVO" alias="readCountVO"/>
 	</typeAliases>
 </configuration>

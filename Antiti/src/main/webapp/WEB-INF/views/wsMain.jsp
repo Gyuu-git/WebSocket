@@ -41,7 +41,7 @@
 <!-- </div> -->
 <!-- 채팅 아이콘 버튼 -->
 
-<div class="openChat">
+<div class="openChat chatBox" id="openChat">
 	<img class="chat openChat" src="/ws/resources/images/off.png">
 	<p id="countMsg"></p>
 </div>
@@ -79,6 +79,7 @@ $(function() {
 		var name = jsonData.name;
 		var message = jsonData.message;
 		var isConn = jsonData.isConn;
+		var readCount = jsonData.readCount;
 		
 		// 메시지 추가
 		if(name == "countMsg"){
@@ -90,9 +91,17 @@ $(function() {
 		
 		var chat = "";
 		if(name == "<%=id %>"){
-			chat = "<div class='my-chat-box'><span class='chat my-chat'>" + message + "</span></div><br>";
+			chat = "<div class='my-chat-box'>"
+			if(readCount != 0){
+				chat += "<span class='chat readCount'>" + readCount + "</span>";
+			}
+			chat += "<span class='chat my-chat'>" + message + "</span></div><br>";
 		}else{
-			chat = "<div class='chat-box'><div>" + name + "</div><span class='chat'>" + message + "</span></div><br>";
+			chat = "<div class='chat-box'><div>" + name + "</div>";
+			if(readCount != 0){
+				chat += "<span class='chat'>" + message + "</span>";
+			}
+			chat += "<span class='chat readCount'>" + readCount + "</span></div><br>";
 			
 			if(isConn == 'false'){
 				var status = $("#main-container").css("display");
@@ -108,6 +117,7 @@ $(function() {
 		}
 		console.log(chat);
 		$("#chat-container").append(chat);
+		$('#chat-container').scrollTop($('#chat-container')[0].scrollHeight+100);
 	}
 
 	webSocket.onerror = function onError(event) {
@@ -115,17 +125,23 @@ $(function() {
 	}
 	
 	// 채팅창 켜기
-	$(".openChat").on("click", function() {
-		$(".openChat").css("display", "none");
+	$("#openChat").on("click", function() {
+		var rcArr = $(".readCount");
+		var alerm = $("#countMsg").text();
+		for(var i = rcArr.length -1; i > alerm; i--){
+			console.log(i + " : " + rcArr[i].innerText);
+			rcArr[i].innerText = rcArr[i].innerText - 1;
+		}
+		
+		$("#openChat").css("display", "none");
 		$("#main-container").css("display", "block");
-		$('#chat-container').scrollTop($('#chat-container')[0].scrollHeight+100);
 		$("#countMsg").text("");
 		webSocket.send(createMessage("opne", "<%=id %>"));
 	});
 	
 	// 채팅창 끄기
 	$("#closeChat").on("click", function() {
-		$(".openChat").css("display", "block");
+		$("#openChat").css("display", "block");
 		$("#main-container").css("display", "none");
 		webSocket.send(createMessage("close", "<%=id %>"));
 	});

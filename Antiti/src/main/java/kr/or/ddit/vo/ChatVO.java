@@ -10,4 +10,5 @@ public class ChatVO {
 	private String stuNum;
 	private String chatCont;
 	private Date chatDate;
+	private int readCount;
 }

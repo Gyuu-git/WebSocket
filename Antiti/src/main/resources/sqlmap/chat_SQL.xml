@@ -32,4 +32,14 @@
 		     (SELECT LAST_CHAT FROM STUDY WHERE STU_NUM = #{stuNum}) B
 	</select>
 
+	<select id="readCount" resultType="readCountVO">
+		SELECT COUNT(*) PLUS, LAST_CHAT
+		FROM STUDY
+		GROUP BY LAST_CHAT
+		ORDER BY LAST_CHAT ASC
+	</select>
+	
+	<select id="getStuCount" resultType="int">
+		SELECT COUNT(*) FROM STUDY
+	</select>
 </mapper>
