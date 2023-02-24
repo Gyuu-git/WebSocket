@@ -58,32 +58,46 @@ public class SpringWs extends TextWebSocketHandler {
 		Gson gson = new Gson();
 		ChatMessageVO chatMessageVo = gson.fromJson(msg, ChatMessageVO.class);
 		
+		// command : connect, open, close, message
+		// chatMessage : username        / message
 		String command = chatMessageVo.getCommand();
 		String chatMessage = chatMessageVo.getMessage();
 		
 		// 첫 연결일때
 		if("connect".equals(command)) {
+			// 연결이 되면 유저 세션, 이름, 채팅창 상태(0: 꺼짐 / 1: 켜짐) 세팅
 			userSessionList.add(new WsSessionVO(session, chatMessage, 0));
-			log.info("size : " + userSessionList.size());
 			
+			// 전체 채팅 리스트를 가져와서 true, 채팅내용, 보낸사람, 안읽은 사람수를
+			// 반복문을 통해서 하나씩 jsp로 전송
 			List<ChatVO> chatList = chatService.getChatList();
 			for(ChatVO chatVO : chatList) {
 				session.sendMessage(buildJsonTextMessage("true", chatVO.getChatCont(), chatVO.getStuNum(), chatVO.getReadCount()));
 			}
 			
+			// 처음 연결했을때 쌓여있는 메시지 알림 수 전송
 			int count = chatService.getMsgCount(chatMessage);
 			session.sendMessage(buildJsonTextMessage("true", count + "", "countMsg", -1));
 		}
 		
 		// 채팅창을 열었을 때
-		if("opne".equals(command)) {
+		if("open".equals(command)) {
 			for(WsSessionVO wsVO : userSessionList) {
 				if(wsVO.getWebSocketSession() == session) {
 					wsVO.setStatus(1);
 					ChatVO chatVO = new ChatVO();
+					// 지금은 이름=stuNum이지만 원래 stuNum은 학번
 					chatVO.setStuNum(wsVO.getName());
 					chatService.updateLast(chatVO);
 					break;
+				}
+			}
+			// 누가 채팅창을 열어서 읽으면 refresh
+			List<ChatVO> chatList = chatService.getChatList();
+			for(WsSessionVO wsVO : userSessionList) {
+				wsVO.getWebSocketSession().sendMessage(buildJsonTextMessage("refresh", "", "", -1));
+				for(ChatVO chatVO : chatList) {
+					wsVO.getWebSocketSession().sendMessage(buildJsonTextMessage("true", chatVO.getChatCont(), chatVO.getStuNum(), chatVO.getReadCount()));
 				}
 			}
 		}
@@ -97,23 +111,35 @@ public class SpringWs extends TextWebSocketHandler {
 			}
 		}
 		
+		// 메시지가 오면
 		if("message".equals(command)) {
 			ChatVO chatVO = new ChatVO();
 			WsSessionVO wsVO = null;
 			int cnt = 0;
+			
 			for(WsSessionVO sessionVO : userSessionList) {
-				if(sessionVO.getStatus() == 0) cnt ++;
+				// 보낸사람 vo 찾기
 				if(sessionVO.getWebSocketSession() == session) {
 					wsVO = sessionVO;
+					break;
 				}
 			}
-			
+			// 찾은 vo에서 이름을 가져와서 CHAT테이블에 insert
+			// 지금은 이름=stuNum이지만 원래 stuNum은 학번
 			chatVO.setStuNum(wsVO.getName());
 			chatVO.setChatCont(chatMessage);
 			chatService.insertChat(chatVO);
 			
-			if(wsVO.getStatus() == 1) {
-				chatService.updateLast(chatVO);
+			for(WsSessionVO sessionVO : userSessionList) {
+				// 채팅창이 열려있는 유저의 읽은 채팅 카운트 update
+				if(sessionVO.getStatus() == 1) {
+					ChatVO chatName = new ChatVO();
+					// 지금은 이름=stuNum이지만 원래 stuNum은 학번
+					chatName.setStuNum(sessionVO.getName());
+					chatService.updateLast(chatName);
+				}
+				// 채팅창이 닫혀있는 사람 카운트
+				if(sessionVO.getStatus() == 0) cnt ++;
 			}
 			
 			int stuCount = chatService.getStuCount();

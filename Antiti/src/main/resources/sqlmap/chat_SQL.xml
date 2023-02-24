@@ -8,7 +8,7 @@
 <mapper namespace="kr.or.ddit.mapper.ChatMapper">
 
 	<select id="getChatList" resultType="chatVO">
-		SELECT CHAT_NUM, STU_NUM, CHAT_CONT, CHAT_DATE
+		SELECT ROWNUM AS CHAT_NUM, NVL(STU_NUM, '알수없음') STU_NUM, CHAT_CONT, CHAT_DATE
 		FROM CHAT
 		ORDER BY CHAT_NUM
 	</select>
